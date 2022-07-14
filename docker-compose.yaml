@@ -1,0 +1,64 @@
+version: "3.1"
+
+services:
+  db:
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: root
+
+  back:
+    build: back
+    init: true
+    environment:
+      CARGO_TARGET_DIR: /opt/target
+      PORT: 3001
+    volumes:
+      - ./back:/opt/back
+      - /opt/back/target/
+      - rust-cargo-home-back:/usr/local/cargo
+      - rust-target-dir-back:/opt/target
+      - ./scripts:/opt/scripts:ro
+    working_dir: /opt/back
+    entrypoint: ./entrypoint.sh
+    command: cargo watch -x 'run'
+    ports:
+      - 3001:3001
+    depends_on:
+      - db
+
+  front:
+    image: node:16
+    init: true
+    environment:
+      YARN_CACHE_FOLDER: /opt/yarn-cache
+    volumes:
+      - ./front:/opt/front
+      - yarn-cache-front:/opt/yarn-cache
+      - ./scripts:/opt/scripts:ro
+    working_dir: /opt/front
+    entrypoint: ./entrypoint.sh
+    command: yarn dev
+    depends_on:
+      - "back"
+    ports:
+      - 24678:24678 # Nuxt dev port
+
+  nginx:
+    build: nginx-dev
+    init: true
+    volumes:
+      - ./scripts:/opt/scripts:ro
+    depends_on:
+      - front
+      - back
+    ports:
+      - 443:443
+      - 80:80
+
+volumes:
+  rust-cargo-home-back:
+  rust-target-dir-back:
+  yarn-cache-front:
