@@ -9,5 +9,18 @@ export default defineNuxtConfig({
   vite: {
     plugins: [eslintPlugin()]
   },
+  css: [
+    "~/assets/css/tailwind.css"
+  ],
+  build: {
+    postcss: {
+      postcssOptions: {
+        plugins: {
+          tailwindcss: {},
+          autoprefixer: {}
+        }
+      }
+    }
+  },
   ssr: false
 });
